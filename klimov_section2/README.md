@@ -11,13 +11,19 @@ Start with these two self-contained lessons. They assume little or no quantum me
 
 1. Open Lesson 01, then choose **File → Save a copy in Drive**.
 2. Select **Runtime → Run all**; a CPU runtime is sufficient.
-3. Read one section, write a prediction, then open its interactive experiment.
-4. Edit the **My reasoning** text cells to save your explanations. Slider positions and quiz selections are temporary.
+3. Read one section, write a prediction, then change its controls.
+4. Edit the **My reasoning** text cells to save your explanations. Save the notebook after editing controls or answers.
 5. Complete the closed-notes questions before moving to Lesson 02.
 
-Allow two sittings of roughly 35–50 minutes for the foundations and two or three for §2.1. These are pacing suggestions, not deadlines. Revisit the transfer questions the next day.
+Allow two or three sittings of roughly 35–50 minutes for the foundations and two or three for §2.1. These are pacing suggestions, not deadlines. Revisit the transfer questions the next day.
 
-The code is supplied and collapsed in Colab. Each lesson runs independently, without loading files from the repository. GitHub can display the saved plots; use Colab for functioning controls. If a live control stays blank, rerun the setup cell and that experiment; if necessary, restart the runtime and run all cells.
+The code is supplied and collapsed in Colab. **Sliders and dropdowns now appear directly in each experiment's form.** They do not depend on saved Jupyter widgets or expandable output panels. Run the cell once; changing a control then reruns it automatically. If a plot does not refresh, press the cell's ▶ button again. Keep the runtime connected. In local Jupyter, the standard live widgets remain visible.
+
+Each lesson runs independently, without loading files from the repository. GitHub displays saved plots but cannot run controls.
+
+**Already saved a Drive copy?** Existing copies do not automatically receive GitHub updates. Reopen the links above and save a new copy, preserving any reasoning you wrote in the old one.
+
+**Expanded Section 3:** The foundations now explain the physical box, the Schrödinger equation and curvature, the sine/cosine solution, both wall conditions, the integer wave numbers, normalization, and the resulting energies. Two new experiments let you test which waves fit and why the normalization factor is needed.
 
 ### What “understood” means
 
@@ -46,4 +52,4 @@ To also execute both notebooks in fresh kernels and save a review copy, use:
 
     python klimov_section2/validate_lessons.py --execute --output-dir /tmp/klimov-lesson-review
 
-Validation covers state normalization and orthogonality, Bessel roots, independent energy calculations, the Coulomb integral, parameter extremes, widget observers, quiz feedback, notebook structure, and fresh-kernel execution. Local execution does not establish compatibility with every institution's Colab browser policy.
+Validation covers state normalization and orthogonality, Bessel roots, independent energy calculations, the Coulomb integral, parameter extremes, widget observers, native Colab form inputs and feedback, notebook structure, and fresh-kernel execution. Local execution does not establish compatibility with every institution's Colab browser policy.

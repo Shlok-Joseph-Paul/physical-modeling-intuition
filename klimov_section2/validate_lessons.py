@@ -1,6 +1,8 @@
 """Independent scientific and interaction checks for the two learning notebooks."""
 from pathlib import Path
 import argparse
+import ast
+import json
 import contextlib
 import io
 import itertools
@@ -91,6 +93,84 @@ def interaction_checks(ns):
         select.value=-1
     return count
 
+
+def foundations_checks(ns):
+    # Derive normalization and orthogonality independently of the plotting functions.
+    for a in [1.,3.,6.]:
+        for n in range(1,5):
+            psi=lambda x:np.sqrt(2/a)*np.sin(n*np.pi*x/a)
+            assert np.isclose(quad(lambda x:psi(x)**2,0,a)[0],1,atol=1e-12)
+            assert abs(psi(0))+abs(psi(a))<1e-12
+            for m in range(1,n):
+                overlap=quad(lambda x:psi(x)*np.sqrt(2/a)*np.sin(m*np.pi*x/a),0,a)[0]
+                assert abs(overlap)<1e-12
+            # A finite-difference derivative verifies the Schrödinger residual.
+            x=np.linspace(.05*a,.95*a,101);dx=1e-4*a
+            curvature=(psi(x+dx)-2*psi(x)+psi(x-dx))/dx**2
+            exact=-(n*np.pi/a)**2*psi(x)
+            assert np.allclose(curvature,exact,rtol=2e-6,atol=1e-6)
+    assert abs(np.sin(1.5*np.pi))>.99
+    assert abs(np.sin(2*np.pi))<1e-12
+    assert np.isclose(quad(lambda x:(2*np.sqrt(2/3)*np.sin(np.pi*x/3))**2,0,3)[0],4)
+
+def native_form_checks(nb,shell):
+    """Exercise the Colab code path without depending on Google's runtime."""
+    ns=shell.user_ns
+    ns["IN_COLAB"]=True
+    original_display=ns["display"]
+    displayed=[]
+    ns["display"]=lambda *items:displayed.extend(getattr(item,"data","") for item in items)
+    count=0
+    try:
+        for cell in nb.cells:
+            if cell.cell_type!="code" or "# @param" not in cell.source:
+                continue
+            assert '{run: "auto", single-column: true}' in cell.source
+            with capture_output() as captured:
+                result=shell.run_cell(cell.source)
+            assert result.error_in_exec is None,result.error_in_exec
+            assert "Traceback" not in captured.stdout+captured.stderr
+            tree=ast.parse(cell.source)
+            calls=[n.value for n in tree.body if isinstance(n,ast.Expr)
+                   and isinstance(n.value,ast.Call) and isinstance(n.value.func,ast.Name)
+                   and n.value.func.id in ["lab","quiz"]]
+            call=calls[-1]
+            if call.func.id=="lab":
+                fields=next(k.value for k in call.keywords if k.arg=="form_values")
+                expected=eval(compile(ast.Expression(fields),"<fields>","eval"),ns)
+                key=ast.literal_eval(call.args[0])
+                assert {k:w.value for k,w in ns["LABS"][key][1].items()}==expected
+                # Emulate editing a native slider and rerunning the whole cell.
+                for line in cell.source.splitlines():
+                    if '# @param {"type": "slider"' not in line:continue
+                    before,annotation=line.split("# @param",1)
+                    config=json.loads(annotation)
+                    variable=before.split("=")[0].strip()
+                    changed=cell.source.replace(line,variable+" = "+repr(config["max"])+" # @param"+annotation)
+                    with capture_output() as captured:
+                        result=shell.run_cell(changed)
+                    assert result.error_in_exec is None,result.error_in_exec
+                    expected=eval(compile(ast.Expression(fields),"<fields>","eval"),ns)
+                    assert {k:w.value for k,w in ns["LABS"][key][1].items()}==expected
+                    break
+            else:
+                choices=ast.literal_eval(call.args[2]);correct=ast.literal_eval(call.args[3])
+                for i,choice in enumerate(choices):
+                    changed=cell.source.replace('your_answer = "Choose an answer"', 'your_answer = '+repr(choice))
+                    displayed.clear()
+                    with capture_output() as captured:
+                        result=shell.run_cell(changed)
+                    assert result.error_in_exec is None,result.error_in_exec
+                    html=" ".join(x for x in displayed if isinstance(x,str))
+                    assert ("Correct." in html)==(i==correct),html
+            plt.close("all")
+            count+=1
+    finally:
+        ns["IN_COLAB"]=False
+        ns["display"]=original_display
+    return count
+
+
 def main():
     parser=argparse.ArgumentParser()
     parser.add_argument("--execute",action="store_true")
@@ -115,6 +195,8 @@ def main():
                 assert "Traceback" not in captured.stderr+captured.stdout,(file,i,captured)
         if file.startswith("02"):
             independent_physics(ns)
+        else:
+            foundations_checks(ns)
         count=interaction_checks(ns)
         # Export actual reference plots for visual inspection.
         for key,(fn,controls,_) in ns["LABS"].items():
@@ -128,7 +210,8 @@ def main():
             finally:
                 plt.show=original
                 plt.close("all")
-        print(f"{file}: structure, scientific checks, {count} control changes, and quiz feedback passed.")
+        form_count=native_form_checks(nb,shell)
+        print(f"{file}: structure, scientific checks, {count} control changes, {form_count} native forms, and quiz feedback passed.")
         if args.execute:
             from nbclient import NotebookClient
             client=NotebookClient(nb,timeout=180,kernel_name="python3",
