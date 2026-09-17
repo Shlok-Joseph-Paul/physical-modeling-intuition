@@ -26,6 +26,13 @@ This repository contains a six-month scientific modeling curriculum designed to 
 - [ ] Gaussian processes
 - [ ] Bayesian optimization
 
+## Quantum mechanics for the Klimov review
+
+Start with [Foundations and Section 2.1](klimov_section2/README.md): two guided Google Colab notebooks for learning the quantum mechanics behind semiconductor quantum dots from little or no QM background. They include interactive experiments, worked examples, feedback, and independent reasoning challenges.
+
+- [Open the foundations in Colab](https://colab.research.google.com/github/Shlok-Joseph-Paul/physical-modeling-intuition/blob/main/klimov_section2/01_foundations.ipynb)
+- [Open the spherical quantum box (§2.1) in Colab](https://colab.research.google.com/github/Shlok-Joseph-Paul/physical-modeling-intuition/blob/main/klimov_section2/02_spherical_quantum_box.ipynb)
+
 ## Repository structure
 
 - `fundamentals/` — core physical reasoning and modeling habits
